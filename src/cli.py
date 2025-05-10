@@ -2,13 +2,13 @@ from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from human_eval.data import write_jsonl, read_problems
 
-model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
+model_name = "Qwen/Qwen2.5-Coder-0.5B"
 # Initialize the tokenizer
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 # Pass the default decoding hyperparameters of Qwen1.5-32B-Chat
 # max_tokens is for the maximum length for generation.
-sampling_params = SamplingParams(temperature=0.7, top_p=0.8, top_k=20, repetition_penalty=1.05)
+sampling_params = SamplingParams(temperature=0.7, top_p=0.8, top_k=20, repetition_penalty=1.05, max_tokens=1024)
 
 # Input the model name or path. Can be GPTQ or AWQ models.
 llm = LLM(model=model_name)
