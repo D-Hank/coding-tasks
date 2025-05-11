@@ -76,7 +76,7 @@ def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int
         for s in range(num_samples):
             answer = answers[i * num_samples + s]
             #code = extract_code(answer, entry_point).split("```")[0]
-            code = answer.split("```")[0].split("# Test cases")[0].split("def check_solution")[0]
+            code = answer.split("```")[0].split("# Test cases")[0].split("def check")[0].split("assert")[0]
             # Save raw answer for checking
             samples.append(
                 dict(task_id=task_id, completion=code, response=answer)
@@ -90,11 +90,11 @@ if __name__ == "__main__":
 
     # Pass the default decoding hyperparameters of Qwen1.5-32B-Chat
     # max_tokens is for the maximum length for generation.
-    sampling_params = SamplingParams(temperature=0.7, top_p=0.8, top_k=20, repetition_penalty=1.05, max_tokens=1024)
+    sampling_params = SamplingParams(temperature=0.01, top_p=0.8, top_k=20, repetition_penalty=1.05, max_tokens=1024)
 
     problems = read_problems()
 
-    num_samples_per_task = 100
+    num_samples_per_task = 1
     task_ids = list(problems.keys())
 
     # Cached raw output
