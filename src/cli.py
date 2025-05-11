@@ -8,7 +8,7 @@ from vllm import LLM, SamplingParams
 from human_eval.data import write_jsonl, read_problems
 
 
-def generate_prompts(problems: Dict[int, Dict], task_ids: List[int]) -> List[str]:
+def generate_prompts(problems: Dict[int, Dict], task_ids: List[int], num_samples: int) -> List[str]:
     prompts = []
     for task_id in task_ids:
         problem = problems[task_id]
@@ -32,7 +32,7 @@ def generate_prompts(problems: Dict[int, Dict], task_ids: List[int]) -> List[str
             f"{snippet}"
         )
 
-        prompts.append(prompt)
+        for i in range(num_samples): prompts.append(prompt)
 
     return prompts
 
@@ -67,19 +67,20 @@ def extract_code(answer: str, entry_point: str) -> str:
     # Drop content after ``` if it is given since they are content out of the code box (chat content)
     return code.split("```")[0]
 
-def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int]) -> List[Dict]:
+def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int], num_samples: int) -> List[Dict]:
     samples = []
     for i in range(len(task_ids)):
         task_id = task_ids[i]
         problem = problems[task_id]
-        answer = answers[i]
         entry_point = problem["entry_point"]
-        #code = extract_code(answer, entry_point).split("```")[0]
-        code = answer.split("```")[0].split("# Test cases")[0].split("def check_solution")[0]
-        # Save raw answer for checking
-        samples.append(
-            dict(task_id=task_id, completion=code, response=answer)
-        )
+        for s in range(num_samples):
+            answer = answers[i * num_samples + s]
+            #code = extract_code(answer, entry_point).split("```")[0]
+            code = answer.split("```")[0].split("# Test cases")[0].split("def check_solution")[0]
+            # Save raw answer for checking
+            samples.append(
+                dict(task_id=task_id, completion=code, response=answer)
+            )
 
     return samples
 
@@ -89,16 +90,16 @@ if __name__ == "__main__":
 
     # Pass the default decoding hyperparameters of Qwen1.5-32B-Chat
     # max_tokens is for the maximum length for generation.
-    sampling_params = SamplingParams(temperature=0.01, top_p=0.8, top_k=20, repetition_penalty=1.05, max_tokens=1024)
+    sampling_params = SamplingParams(temperature=0.7, top_p=0.8, top_k=20, repetition_penalty=1.05, max_tokens=1024)
 
     problems = read_problems()
 
-    num_samples_per_task = 1
+    num_samples_per_task = 100
     task_ids = list(problems.keys())
 
     # Cached raw output
     if not os.path.exists("raw.npy"):
-        prompts = generate_prompts(problems, task_ids)
+        prompts = generate_prompts(problems, task_ids, num_samples_per_task)
 
         # Input the model name or path. Can be GPTQ or AWQ models.
         llm = LLM(model=model_name)
@@ -110,6 +111,6 @@ if __name__ == "__main__":
     else:
         answers = np.load("raw.npy")
 
-    samples = process_outputs(answers, problems, task_ids)
+    samples = process_outputs(answers, problems, task_ids, num_samples_per_task)
 
     write_jsonl("samples.jsonl", samples)
