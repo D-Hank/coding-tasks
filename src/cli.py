@@ -75,7 +75,7 @@ def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int
         answer = answers[i]
         entry_point = problem["entry_point"]
         #code = extract_code(answer, entry_point).split("```")[0]
-        code = answer.split("```")[0].split("# Test cases")[0]
+        code = answer.split("```")[0].split("# Test cases")[0].split("def check_solution")[0]
         # Save raw answer for checking
         samples.append(
             dict(task_id=task_id, completion=code, response=answer)
