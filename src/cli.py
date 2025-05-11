@@ -1,38 +1,63 @@
-from transformers import AutoTokenizer
+import re
+import textwrap
+
+from typing import Dict
+
 from vllm import LLM, SamplingParams
 from human_eval.data import write_jsonl, read_problems
 
-model_name = "Qwen/Qwen2.5-Coder-0.5B"
-# Initialize the tokenizer
-tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# Pass the default decoding hyperparameters of Qwen1.5-32B-Chat
-# max_tokens is for the maximum length for generation.
-sampling_params = SamplingParams(temperature=0.7, top_p=0.8, top_k=20, repetition_penalty=1.05, max_tokens=1024)
+if __name__ == "__main__":
 
-# Input the model name or path. Can be GPTQ or AWQ models.
-llm = LLM(model=model_name)
+    model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
 
-# Print the outputs.
-#for output in outputs:
-#    prompt = output.prompt
-#    generated_text = output.outputs[0].text
-#    print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+    # Pass the default decoding hyperparameters of Qwen1.5-32B-Chat
+    # max_tokens is for the maximum length for generation.
+    sampling_params = SamplingParams(temperature=0.01, top_p=0.8, top_k=20, repetition_penalty=1.05, max_tokens=1024)
 
-problems = read_problems()
+    problems = read_problems()
 
-num_samples_per_task = 1
-task_ids = list(problems.keys())
-prompts = [
-    problems[task_id]["prompt"]
-    for task_id in task_ids
-    for _ in range(num_samples_per_task)
-]
+    num_samples_per_task = 1
+    task_ids = list(problems.keys())
 
-outputs = llm.generate(prompts, sampling_params)
+    prompts = []
+    for task_id in task_ids:
+        problem = problems[task_id]
+        snippet = problem["prompt"]
+        entry_point = problem["entry_point"]
+        # use humanevalpack prompt
+        signature = re.search(
+            rf"def\s+{entry_point}.*:.*\n", snippet
+        )
 
-samples = [
-    dict(task_id=task_ids[i], completion=outputs[i].outputs[0].text)
-    for i in range(len(task_ids))
-]
-write_jsonl("samples.jsonl", samples)
+        rest = snippet[signature.end() + 1 : ].strip()
+        docstring = re.search(
+            rf"(?:\"\"\"|''')(.*?)(?:\"\"\"|''')", rest, re.DOTALL
+        )
+
+        # Drop \n in the signature
+        # Drop """ in docstring by using the first captured group
+        prompt = (
+            f"I'm trying to write a Python function with the signature of `{signature.group(0)[ : -1]}` to solve the following problem:\n"
+            f"{docstring.group(1)}\n"
+            f"I already have a code snippet. Note that I do not need test cases. Please help me complete my draft code below:\n"
+            f"{snippet}"
+        )
+
+        prompts.append(prompt)
+
+    # Input the model name or path. Can be GPTQ or AWQ models.
+    llm = LLM(model=model_name)
+
+    outputs = llm.generate(prompts, sampling_params)
+
+    samples = []
+    for i in range(len(task_ids)):
+        task_id = task_ids[i]
+        problem = problems[task_id]
+        code = outputs[i].outputs[0].text
+        samples.append(
+            dict(task_id=task_id, completion=code)
+        )
+
+    write_jsonl("samples.jsonl", samples)
