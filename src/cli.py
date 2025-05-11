@@ -1,25 +1,14 @@
 import re
-import textwrap
+import os
+import numpy as np
 
-from typing import Dict
+from typing import List, Dict
 
 from vllm import LLM, SamplingParams
 from human_eval.data import write_jsonl, read_problems
 
 
-if __name__ == "__main__":
-
-    model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
-
-    # Pass the default decoding hyperparameters of Qwen1.5-32B-Chat
-    # max_tokens is for the maximum length for generation.
-    sampling_params = SamplingParams(temperature=0.01, top_p=0.8, top_k=20, repetition_penalty=1.05, max_tokens=1024)
-
-    problems = read_problems()
-
-    num_samples_per_task = 1
-    task_ids = list(problems.keys())
-
+def generate_prompts(problems: Dict[int, Dict], task_ids: List[int]) -> List[str]:
     prompts = []
     for task_id in task_ids:
         problem = problems[task_id]
@@ -46,18 +35,80 @@ if __name__ == "__main__":
 
         prompts.append(prompt)
 
-    # Input the model name or path. Can be GPTQ or AWQ models.
-    llm = LLM(model=model_name)
+    return prompts
 
-    outputs = llm.generate(prompts, sampling_params)
+def extract_code(answer: str, entry_point: str) -> str:
+    # Pattern 1: in markdown code block
+    code = re.search(
+        rf'''
+        ```python\n
+        [\s\S]*
+        def\s+{entry_point}.*:.*\n
+        ([\s\S]*)
+        ```
+        ''',
+        answer
+    )
+    # Pattern 2: not in markdown
+    if code is None:
+        code = re.search(
+            rf'''
+            [\s\S]*
+            def\s+{entry_point}.*:.*\n
+            ([\s\S]*)
+            ''',
+            answer
+        )
+    if code is not None:
+        code = code.group(1)
+    # Pattern 3: directly complete the snippet
+    else:
+        code = answer
 
+    # Drop content after ``` if it is given since they are content out of the code box (chat content)
+    return code.split("```")[0]
+
+def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int]) -> List[Dict]:
     samples = []
     for i in range(len(task_ids)):
         task_id = task_ids[i]
         problem = problems[task_id]
-        code = outputs[i].outputs[0].text
+        answer = answers[i]
+        entry_point = problem["entry_point"]
+        code = extract_code(answer, entry_point)
         samples.append(
             dict(task_id=task_id, completion=code)
         )
+
+    return samples
+
+if __name__ == "__main__":
+
+    model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
+
+    # Pass the default decoding hyperparameters of Qwen1.5-32B-Chat
+    # max_tokens is for the maximum length for generation.
+    sampling_params = SamplingParams(temperature=0.01, top_p=0.8, top_k=20, repetition_penalty=1.05, max_tokens=1024)
+
+    problems = read_problems()
+
+    num_samples_per_task = 1
+    task_ids = list(problems.keys())
+
+    # Cached raw output
+    if not os.path.exists("raw.npy"):
+        prompts = generate_prompts(problems, task_ids)
+
+        # Input the model name or path. Can be GPTQ or AWQ models.
+        llm = LLM(model=model_name)
+
+        outputs = llm.generate(prompts, sampling_params)
+        answers = [output.outputs[0].text for output in outputs]
+        np.save("raw.npy", answers)
+
+    else:
+        answers = np.load("raw.npy")
+
+    samples = process_outputs(answers, problems, task_ids)
 
     write_jsonl("samples.jsonl", samples)
