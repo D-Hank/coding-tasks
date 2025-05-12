@@ -16,7 +16,7 @@ def generate_prompts(problems: Dict[int, Dict], task_ids: List[int], num_samples
         entry_point = problem["entry_point"]
         # use humanevalpack prompt
         signature = re.search(
-            rf"def\s+({entry_point}.*?):\s*\n", snippet
+            rf"def\s+({entry_point}.*?:.*?)\n", snippet
         )
 
         rest = snippet[signature.end() + 1 : ].strip()
@@ -27,8 +27,9 @@ def generate_prompts(problems: Dict[int, Dict], task_ids: List[int], num_samples
         # Drop \n in the signature
         # Drop """ in docstring by using the first captured group
         prompt = (
-            f"Write a Python function `{signature.group(1)}` to solve the following problem. You may need to import necessary libraries.\n"
+            f"I'm trying to write a Python function with the signature of `{signature.group(1)}` to solve the following problem:\n"
             f"{docstring.group(1)}\n"
+            f"I already have a draft code snippet. Please help me complete it:\n"
             f"{snippet}"
         )
 
@@ -39,33 +40,24 @@ def generate_prompts(problems: Dict[int, Dict], task_ids: List[int], num_samples
 def extract_code(answer: str, entry_point: str) -> str:
     # Pattern 1: in markdown code block
     code = re.search(
-        rf'''
-        ```python\n
-        [\s\S]*
-        def\s+{entry_point}.*:.*\n
-        ([\s\S]*)
-        ```
-        ''',
-        answer
+        rf"```python\n(.*?)```",
+        answer, re.DOTALL
     )
-    # Pattern 2: not in markdown
-    if code is None:
-        code = re.search(
-            rf'''
-            [\s\S]*
-            def\s+{entry_point}.*:.*\n
-            ([\s\S]*)
-            ''',
-            answer
-        )
     if code is not None:
         code = code.group(1)
-    # Pattern 3: directly complete the snippet
+    # Pattern 2: directly complete the snippet
     else:
         code = answer
 
+    # Remove signature if it appears at the beginning
+    signature = re.search(
+        rf"^def\s+({entry_point}.*?):\s*\n", code
+    )
+    if signature is not None:
+        code = code[len(signature.group(0)) : ]
+
     # Drop content after ``` if it is given since they are content out of the code box (chat content)
-    return code.split("```")[0]
+    return code.split("```")[0].split("# Test ")[0].split("assert")[0].split("def check")[0]
 
 def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int], num_samples: int) -> List[Dict]:
     samples = []
@@ -75,8 +67,8 @@ def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int
         entry_point = problem["entry_point"]
         for s in range(num_samples):
             answer = answers[i * num_samples + s]
-            #code = extract_code(answer, entry_point).split("```")[0]
-            code = answer.split("```")[0].split("# Test ")[0].split("def check")[0].split("assert")[0]
+            code = extract_code(answer, entry_point)
+            #code = answer.split("```")[0].split("# Test ")[0].split("def check")[0].split("assert")[0]
             # Save raw answer for checking
             samples.append(
                 dict(task_id=task_id, completion=code, response=answer)
@@ -86,7 +78,7 @@ def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int
 
 if __name__ == "__main__":
 
-    model_name = "Qwen/Qwen2.5-Coder-3B-Instruct"
+    model_name = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
 
     # Pass the default decoding hyperparameters of Qwen1.5-32B-Chat
     # max_tokens is for the maximum length for generation.
