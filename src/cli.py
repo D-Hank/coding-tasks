@@ -86,7 +86,7 @@ def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int
 
 if __name__ == "__main__":
 
-    model_name = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
+    model_name = "Qwen/Qwen2.5-Coder-3B-Instruct"
 
     # Pass the default decoding hyperparameters of Qwen1.5-32B-Chat
     # max_tokens is for the maximum length for generation.
