@@ -16,7 +16,7 @@ def generate_prompts(problems: Dict[int, Dict], task_ids: List[int], num_samples
         entry_point = problem["entry_point"]
         # use humanevalpack prompt
         signature = re.search(
-            rf"def\s+({entry_point}.*?:.*?)\n", snippet
+            rf"def\s+({entry_point}.*?):\s*\n", snippet
         )
 
         rest = snippet[signature.end() + 1 : ].strip()
@@ -27,9 +27,8 @@ def generate_prompts(problems: Dict[int, Dict], task_ids: List[int], num_samples
         # Drop \n in the signature
         # Drop """ in docstring by using the first captured group
         prompt = (
-            f"I'm trying to write a Python function with the signature of `{signature.group(1)}` to solve the following problem:\n"
+            f"Write a Python function `{signature.group(1)}` to solve the following problem. You may need to import necessary libraries.\n"
             f"{docstring.group(1)}\n"
-            f"I already have a draft code snippet. Please help me complete it:\n"
             f"{snippet}"
         )
 
