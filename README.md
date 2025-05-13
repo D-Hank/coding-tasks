@@ -54,3 +54,7 @@ Use docker with vLLM:
 
 https://docs.vllm.ai/en/stable/deployment/docker.html
 
+Docker SDK for Python:
+
+https://docker-py.readthedocs.io/en/stable/
+
