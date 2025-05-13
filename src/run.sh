@@ -5,5 +5,5 @@ docker run --runtime nvidia --gpus all \
     --ipc=host \
     vllm/vllm-openai:latest \
     --model Qwen/Qwen2.5-Coder-0.5B-Instruct \
-    --max_model_len 1024 \
+    --max_model_len 4096 \ # Should be greater than output token len
     --api_key "EMPTY"

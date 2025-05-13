@@ -34,9 +34,11 @@ if __name__ == "__main__":
             prompt=prompts,
             temperature=0.01,
             top_p=0.8,
-            top_k=20,
-            repetition_penalty=1.05,
-            max_tokens=1024
+            max_tokens=1024,
+            extra_body={
+                "top_k": 20,
+                "repetition_penalty": 1.05
+            }
         )
 
         answers = [output.text for output in outputs.choices]
