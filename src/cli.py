@@ -44,6 +44,15 @@ def extract_code(answer: str, entry_point: str) -> str:
     )
     if code is not None:
         code = code.group(1)
+        start_code = re.search(
+            rf"^assert",
+            code
+        )
+
+        # If this extracted code block is a test block, use the whole answer instead for subsequent extraction
+        if start_code != None:
+            code = answer
+
     # Pattern 2: directly complete the snippet
     else:
         code = answer
@@ -55,8 +64,11 @@ def extract_code(answer: str, entry_point: str) -> str:
     if signature is not None:
         code = code[len(signature.group(0)) : ]
 
-    # Drop content after ``` if it is given since they are content out of the code box (chat content)
-    return code.split("```")[0].split("# Test ")[0].split("assert")[0].split("def check")[0]
+    # Drop content after ``` if it is given since they are content out of the code box, especially when llm directly fills the answer
+    # Drop test cases
+    code = code.split("```")[0].split("# Test ")[0].split("assert")[0].split("def check")[0]
+
+    return code
 
 def process_outputs(answers: List, problems: Dict[int, Dict], task_ids: List[int], num_samples: int) -> List[Dict]:
     samples = []
