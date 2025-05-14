@@ -18,9 +18,10 @@ on your remote target, which will serve vLLM in a docker instance.
 
 Run:
 ```
+cd eval
 python evaluate.py
 ```
-on your local host. Output programs will be saved as `samples.jsonl` and uploaded to server.
+on target (remember to turn off your proxies). Output programs will be saved as `samples.jsonl`.
 
 ### Evaluation
 
@@ -75,3 +76,6 @@ https://docker-py.readthedocs.io/en/stable/
 Docker network:
 
 https://blog.csdn.net/2301_80163789/article/details/147163421
+
+Python multiprocessing:
+https://blog.csdn.net/riven78/article/details/147233715

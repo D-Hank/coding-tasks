@@ -8,8 +8,9 @@ image = "vllm/vllm-openai:latest"
 model = "--model Qwen/Qwen2.5-Coder-0.5B-Instruct"
 context_len = "--max_model_len 4096"
 api_key = "--api_key EMPTY"
+#port = "--port 28760"
 
-command = model + " " + context_len + " " + api_key
+command = model + " " + context_len + " " + api_key + " "# + port
 
 client = docker.from_env()
 
