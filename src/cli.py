@@ -13,6 +13,11 @@ command = model + " " + context_len + " " + api_key
 
 client = docker.from_env()
 
+#try:
+#    net = client.networks.get("vllm_net")
+#except docker.errors.NotFound:
+#    net = client.networks.create("vllm_net", driver="bridge")
+
 container = client.containers.run(
     image,
     command=command,
@@ -20,7 +25,7 @@ container = client.containers.run(
     remove=True,
     # Output
     stdout=True,
-    stderr=True,
+    #stderr=True,
     # -p
     ports={"8000/tcp" : 8000},
     # -v
@@ -38,9 +43,10 @@ container = client.containers.run(
     device_requests=[DeviceRequest(count=-1, capabilities=[["gpu"]])],
     # --ipc=host
     ipc_mode="host",
+    #network=net.name
 )
 
-print("Run with docker id:", container.short_id)
+print("Server docker id:", container.short_id)
 
 start_time = time.time()
 
@@ -50,7 +56,7 @@ for line in container.logs(stream=True):
     elapse = end_time - start_time
 
     # 180 seconds
-    if elapse > 180:
-        break
+    #if elapse > 180.0:
+    #    break
 
-container.stop()
+container.kill()
