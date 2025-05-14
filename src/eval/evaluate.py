@@ -50,4 +50,4 @@ if __name__ == "__main__":
     samples = process_outputs(answers, problems, task_ids, num_samples_per_task)
 
     write_jsonl("samples.jsonl", samples)
-    os.system(f"scp samples.jsonl pgemm:/home/daihankun/workspace/")
+    os.system(f"scp samples.jsonl pgemm:/home/daihankun/workspace/coding-tasks/src/eval/")

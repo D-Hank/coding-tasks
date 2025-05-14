@@ -6,15 +6,29 @@ Someone's implementation for the coding tasks. See `./doc` for detailed informat
 
 ## User Guide
 
+### Serving
+
 Make sure your current dir is `src/` under the master folder, run:
 ```
 ./run.sh
 ```
-on your remote target, which will serve vLLM in a docker instance. And run:
+on your remote target, which will serve vLLM in a docker instance.
+
+### Inference
+
+Run:
 ```
 python evaluate.py
 ```
-on your local host. Output programs will be saved as `samples.jsonl`. Then use
+on your local host. Output programs will be saved as `samples.jsonl` and uploaded to server.
+
+### Evaluation
+
+On the server side, build a docker by (You may need to set your proxies in Dockerfile if necessary):
+```
+docker build -t qweneval:latest .
+```
+Then use
 ```
 evaluate_functional_correctness samples.jsonl
 ```

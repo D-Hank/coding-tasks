@@ -1,5 +1,5 @@
-ARG HTTP_PROXY=http://10.18.95.26:24672
-ARG HTTPS_PROXY=http://10.18.95.26:24672
+#ARG HTTP_PROXY=
+#ARG HTTPS_PROXY=
 
 # Pick a slim base that already has Python
 FROM python:3.12-slim AS base
