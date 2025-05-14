@@ -78,4 +78,9 @@ Docker network:
 https://blog.csdn.net/2301_80163789/article/details/147163421
 
 Python multiprocessing:
+
 https://blog.csdn.net/riven78/article/details/147233715
+
+Pass@k score computing:
+
+https://zhuanlan.zhihu.com/p/653063532

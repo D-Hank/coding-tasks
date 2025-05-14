@@ -1,7 +1,9 @@
 import math
 
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from human_eval.data import read_problems, stream_jsonl
+from tqdm import tqdm
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from human_eval.data import read_problems, stream_jsonl, write_jsonl
 
 from execute import run_code
 
@@ -27,10 +29,14 @@ def evaluate(k = 1, num_workers = 8) -> float:
     # n and c of each task
     task_n_c = {task_id : {"n" : 0, "c" : 0} for task_id in task_ids}
 
+    # Unique ID in queue
+    order = 0
+    # Output to file
+    output = []
     # Put all tasks in queue, assign our worker processes to them
-    with ProcessPoolExecutor(num_workers) as pool:
+    with ThreadPoolExecutor(num_workers) as pool:
         procs = []
-        for sample in samples:
+        for sample in tqdm(samples):
             task_id = sample["task_id"]
             completion = sample["completion"]
 
@@ -42,15 +48,31 @@ def evaluate(k = 1, num_workers = 8) -> float:
             code = import_lib + "\n" + prompt + "\n" + completion + "\n" + test + "\ncheck(" + candidate + ")\n"
 
             # Submit to process
-            proc = pool.submit(run_code, task_id, code)
+            proc = pool.submit(run_code, order, code)
             procs.append(proc)
 
+            #if order == 55:
+            #    print(code)
+
+            line = sample.copy()
+            output.append(line)
+
+            order += 1
+
         # Check each process's status
-        for stat in as_completed(procs):
+        for stat in tqdm(as_completed(procs), total=order):
             # No need to save info to compute score
-            task_id, ret = stat.result()
+            order, ret = stat.result()
+            task_id = output[order]["task_id"]
             task_n_c[task_id]["n"] += 1
             task_n_c[task_id]["c"] += int(ret[0])
+
+            line = output[order]
+            line["result"] = ret[1]
+            line["passed"] = ret[0]
+
+            #if order == 55:
+            #    print(ret)
 
     # Compute pass@k of each problem
     scores = []
@@ -58,6 +80,8 @@ def evaluate(k = 1, num_workers = 8) -> float:
         n, c = nc["n"], nc["c"]
         score = compute_score(n, c, k)
         scores.append(score)
+
+    write_jsonl("result.jsonl", output)
 
     return sum(scores) / len(scores)
 
