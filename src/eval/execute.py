@@ -1,10 +1,10 @@
 import signal
 
-import multiprocess as mp
+import multiprocessing as mp
 
 from typing import Tuple
 
-timed_out = 5
+timed_out = 10
 
 def _check(code: str, order: int, queue: mp.Queue):
     # Set time limit: 10 seconds

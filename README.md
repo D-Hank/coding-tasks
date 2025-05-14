@@ -19,21 +19,27 @@ on your remote target, which will serve vLLM in a docker instance.
 Run:
 ```
 cd eval
-python evaluate.py
+python inference.py
 ```
 on target (remember to turn off your proxies). Output programs will be saved as `samples.jsonl`.
 
 ### Evaluation
 
-On the server side, build a docker by (You may need to set your proxies in Dockerfile if necessary):
+Under `src/` folder, build a docker by (You may need to set your proxies in Dockerfile if necessary):
 ```
 docker build -t qweneval:latest .
 ```
-Then use
+Then copy `HumanEval.jsonl` from `datasets/humaneval/` to `eval/`. Under `src` folder, use
+```
+python3 start.py
+```
+for evaluation in our docker instance (or run `evaluate.py` directly). Or you can use
 ```
 evaluate_functional_correctness samples.jsonl
 ```
-and the evaluation result will be `samples.jsonl_results.json`. Pass@k scores will be displayed in your terminal.
+and the evaluation results will be `samples.jsonl_results.json`. Pass@k scores will be displayed in your terminal.
+
+`test.py` can be used to compare the above two options.
 
 ## Package Info
 

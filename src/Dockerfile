@@ -2,7 +2,7 @@
 #ARG HTTPS_PROXY=
 
 # Pick a slim base that already has Python
-FROM python:3.12-slim AS base
+FROM python:3.12 AS base
 
 # 1) Install OS-level libs first (only the ones you really need)
 #RUN apt-get update && apt-get install -y --no-install-recommends \
