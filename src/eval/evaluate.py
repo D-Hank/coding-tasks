@@ -18,6 +18,7 @@ def compute_score(n: int, c: int, k: int) -> float:
     if n - c < k:
         return 1.0
 
+    # Num of cases to select k from wrong code versus select k from all code
     return 1 - math.comb(n - c, k) / math.comb(n, k)
 
 def evaluate(k = 1, num_workers = 8) -> float:

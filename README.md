@@ -10,9 +10,9 @@ Someone's implementation for the coding tasks. See `./doc` for detailed informat
 
 Make sure your current dir is `src/` under the master folder, run:
 ```
-./run.sh
+python3 cli.py
 ```
-on your remote target, which will serve vLLM in a docker instance.
+on your remote target, which will serve vLLM in a docker instance (also ok to run `run.sh`).
 
 ### Inference
 
@@ -21,7 +21,7 @@ Run:
 cd eval
 python inference.py
 ```
-on target (remember to turn off your proxies). Output programs will be saved as `samples.jsonl`.
+on target (remember to turn off your proxies). LLM's answers will be cached as `raw.npy` and extracted programs will be saved as `samples.jsonl`.
 
 ### Evaluation
 
