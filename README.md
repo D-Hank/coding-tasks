@@ -2,7 +2,7 @@
 
 ## Description
 
-Someone's implementation for the coding tasks. See `./doc` for detailed information.
+Someone's implementation for the coding tasks. See `./docs` for detailed information. Project results and summary are shown in `./docs/report.pdf`.
 
 ## User Guide
 
@@ -12,14 +12,14 @@ Make sure your current dir is `src/` under the master folder, run:
 ```
 python3 cli.py
 ```
-on your remote target, which will serve vLLM in a docker instance (also ok to run `run.sh`).
+on your remote target, which will serve Qwen2.5-Coder with vLLM in a docker instance (also ok to run `run.sh`).
 
 ### Inference
 
 Run:
 ```
 cd eval
-python inference.py
+python3 inference.py
 ```
 on target (remember to turn off your proxies). LLM's answers will be cached as `raw.npy` and extracted programs will be saved as `samples.jsonl`.
 
@@ -53,7 +53,7 @@ From vllm-openai:latest
 Latest version: v0.8.6
 Digest: sha256:c48cf118e1e6e39d7790e174d6014f7af5d06f79c2d29d984d11cbe2e8d414e7
 
-## Reference
+## References
 
 Self-written evaluation for Qwen:
 
